@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import joinedload
 
 from webapp.models.sirius.course import Course
 from webapp.schema.education.course import CourseCreate, CourseRead
@@ -14,7 +15,9 @@ async def create_course(session: AsyncSession, course_data: CourseCreate) -> Cou
 
 
 async def get_course_by_id(session: AsyncSession, course_id: int) -> CourseRead | None:
-    result = await session.execute(select(Course).where(Course.id == course_id))
+    result = await session.execute(
+        select(Course).where(Course.id == course_id).options(joinedload(Course.subscriptions))
+    )
     course = result.scalars().first()
     if course:
         return CourseRead.model_validate(course)

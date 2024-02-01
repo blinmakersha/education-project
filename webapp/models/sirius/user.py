@@ -1,6 +1,6 @@
 from sqlalchemy import Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from webapp.models.meta import DEFAULT_SCHEMA, Base
 
@@ -15,3 +15,5 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True)
     role: Mapped[str] = mapped_column(String)
     additional_info: Mapped[dict] = mapped_column(JSONB)
+
+    subscriptions = relationship('Subscription', back_populates='user', cascade='all, delete-orphan')

@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class FileBase(BaseModel):
+class File(BaseModel):
     type: str = Field(..., example='video')
     description: str = Field(..., example='Видеоурок по основам Python.')
     minio_path: str = Field(..., example='path/to/basics-video.mp4')
@@ -11,11 +11,11 @@ class FileBase(BaseModel):
     size: int = Field(..., example=2048)
 
 
-class FileCreate(FileBase):
+class FileCreate(File):
     lesson_id: int = Field(..., example=1, description='The ID of the lesson this file is associated with.')
 
 
-class FileRead(FileBase):
+class FileRead(File):
     id: int
     uploaded_at: datetime
 

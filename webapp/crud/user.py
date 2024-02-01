@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from webapp.models.sirius.user import User as SQLAUser
 from webapp.schema.login.user import User as PydanticUser
@@ -48,8 +49,19 @@ async def get_user(session: AsyncSession, user_info: UserLogin) -> SQLAUser | No
 
 
 async def get_user_by_id(session: AsyncSession, user_id: int) -> PydanticUser | None:
-    result = await session.get(SQLAUser, user_id)
-    print(result)
-    if result:
-        return PydanticUser.model_validate(result)
+    result = await session.execute(
+        select(SQLAUser).where(SQLAUser.id == user_id).options(joinedload(SQLAUser.subscriptions))
+    )
+    user = result.scalars().first()
+    if user:
+        return PydanticUser.model_validate(user)
     return None
+
+
+async def delete_user(session: AsyncSession, user_id: int) -> bool:
+    user = await session.get(SQLAUser, user_id)
+    if user:
+        await session.delete(user)
+        await session.commit()
+        return True
+    return False

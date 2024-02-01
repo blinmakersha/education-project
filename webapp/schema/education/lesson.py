@@ -1,12 +1,13 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from webapp.schema.file.file import FileRead
+if TYPE_CHECKING:
+    from webapp.schema.file.file import FileRead
 
 
-class LessonBase(BaseModel):
+class Lesson(BaseModel):
     title: str = Field(..., example='Введение в Python')
     content: str = Field(..., example='Этот урок познакомит вас с основами Python.')
     order: int = Field(..., example=1)
@@ -14,11 +15,11 @@ class LessonBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class LessonCreate(LessonBase):
+class LessonCreate(Lesson):
     course_id: int = Field(..., example=1)
 
 
-class LessonRead(LessonBase):
+class LessonRead(Lesson):
     id: int
     uploaded_at: datetime
     files: Optional[List[FileRead]] = []

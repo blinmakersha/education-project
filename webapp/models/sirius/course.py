@@ -17,3 +17,4 @@ class Course(Base):
     status: Mapped[str] = mapped_column(String)
 
     lessons = relationship('Lesson', back_populates='course', cascade='all, delete-orphan')
+    subscriptions = relationship('Subscription', back_populates='course', cascade='all, delete-orphan')

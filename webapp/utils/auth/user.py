@@ -1,14 +1,14 @@
 import orjson
 import redis.asyncio as aioredis
-from cache.key_builder import get_user_cache_key
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
+from webapp.cache.key_builder import get_user_cache_key
 from webapp.crud.user import get_user_by_id
 from webapp.db.postgres import get_session
-from webapp.on_startup.redis import get_redis_pool
+from webapp.on_startup.redis import start_redis
 from webapp.schema.login.user import User
 from webapp.utils.auth.jwt import jwt_auth
 
@@ -18,7 +18,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     session: AsyncSession = Depends(get_session),
-    redis: aioredis.Redis = Depends(get_redis_pool),
+    redis: aioredis.Redis = Depends(start_redis),
 ) -> User:
     jwt_payload = jwt_auth.validate_token(token)
     user_id = jwt_payload['user_id']

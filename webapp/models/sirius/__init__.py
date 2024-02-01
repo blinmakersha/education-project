@@ -1,1 +1,1 @@
-from . import course, file, lesson, user
+from . import course, file, lesson, subscribe, user
