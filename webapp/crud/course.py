@@ -36,10 +36,11 @@ async def update_course(session: AsyncSession, course_id: int, course_data: Cour
     return None
 
 
-async def delete_course(session: AsyncSession, course_id: int) -> (True | None):
+async def delete_course(session: AsyncSession, course_id: int) -> bool:
     result = await session.execute(select(Course).where(Course.id == course_id))
     course = result.scalars().first()
     if course:
         await session.delete(course)
         await session.commit()
         return True
+    return False

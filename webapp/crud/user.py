@@ -7,14 +7,10 @@ from webapp.schema.login.user import User as PydanticUser, UserCreate, UserLogin
 from webapp.utils.auth.password import hash_password
 
 
-async def create_user(session: AsyncSession, user_data: UserCreate) -> PydanticUser:
+async def create_user(session: AsyncSession, user_data: UserCreate) -> UserRead:
     hashed_password = hash_password(user_data.password)
     new_user = SQLAUser(
-        username=user_data.username,
-        hashed_password=hashed_password,
-        email=user_data.email,
-        role=user_data.role,
-        additional_info=user_data.additional_info,
+        hashed_password=hashed_password, **user_data.model_dump_json(exclude={'password'})
     )
     session.add(new_user)
     await session.commit()
@@ -23,16 +19,18 @@ async def create_user(session: AsyncSession, user_data: UserCreate) -> PydanticU
 
 
 async def update_user(session: AsyncSession, user_id: int, user_data: UserCreate) -> PydanticUser | None:
-    user = await session.get(SQLAUser, user_id)
+    user_data.password = hash_password(user_data.password)
+    result = await session.execute(select(SQLAUser).where(SQLAUser.id == user_id))
+    user = result.scalars().first()
     if user:
-        user.username = user_data.username
-        user.hashed_password = hash_password(user_data.password)
-        user.email = user_data.email
-        user.role = user_data.role
-        user.additional_info = user_data.additional_info
+        hashed_password = hash_password(user_data.password)
+        user.hashed_password = hashed_password
+        user_data_dict = user_data.model_dump_json(exclude={'password'})
+        for var, value in vars(user_data_dict).items():
+            setattr(user, var, value) if value else None
         await session.commit()
         await session.refresh(user)
-        return PydanticUser.model_validate(user)
+        return UserRead.model_validate(user)
     return None
 
 
