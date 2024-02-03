@@ -1,15 +1,9 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-if TYPE_CHECKING:
-    from webapp.schema.education.course import CourseRead
-
 
 class User(BaseModel):
-    id: int = Field(..., example=1)
     username: str = Field(..., example='user')
     email: EmailStr = Field(..., example='user@example.com')
     role: Optional[str] = Field(None, example='admin')
@@ -19,8 +13,8 @@ class User(BaseModel):
 
 
 class UserLogin(BaseModel):
-    username: str = Field(..., example='user123')
-    password: str = Field(..., example='strongpassword')
+    username: str = Field(..., example='admin1')
+    password: str = Field(..., example='qwerty')
 
 
 class UserLoginResponse(BaseModel):
@@ -33,8 +27,10 @@ class UserLoginResponse(BaseModel):
 class UserCreate(User):
     password: str = Field(..., example='newpassword')
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class UserRead(User):
-    subscribed_courses: Optional[List[CourseRead]] = []
+    id: int = Field(..., example=1)
 
     model_config = ConfigDict(from_attributes=True)

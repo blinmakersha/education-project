@@ -10,7 +10,7 @@ from webapp.schema.login.user import UserLogin, UserLoginResponse
 from webapp.utils.auth.jwt import jwt_auth
 
 
-@auth_router.post('/login', response_model=UserLoginResponse, tags=['Пользователи'])
+@auth_router.post('/login', response_model=UserLoginResponse, tags=['Auth'])
 async def login(
     body: UserLogin,
     session: AsyncSession = Depends(get_session),

@@ -3,8 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from webapp.models.sirius.user import User as SQLAUser
-from webapp.schema.login.user import User as PydanticUser
-from webapp.schema.login.user import UserCreate, UserLogin
+from webapp.schema.login.user import User as PydanticUser, UserCreate, UserLogin, UserRead
 from webapp.utils.auth.password import hash_password
 
 
@@ -48,13 +47,13 @@ async def get_user(session: AsyncSession, user_info: UserLogin) -> SQLAUser | No
     ).one_or_none()
 
 
-async def get_user_by_id(session: AsyncSession, user_id: int) -> PydanticUser | None:
+async def get_user_by_id(session: AsyncSession, user_id: int) -> UserRead | None:
     result = await session.execute(
         select(SQLAUser).where(SQLAUser.id == user_id).options(joinedload(SQLAUser.subscriptions))
     )
     user = result.scalars().first()
     if user:
-        return PydanticUser.model_validate(user)
+        return UserRead.model_validate(user)
     return None
 
 
