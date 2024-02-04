@@ -102,6 +102,7 @@ async def get_courses_by_user_id_subscription(
     session: AsyncSession = Depends(get_session),
     current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
 ):
+    # доп проверка: если доступ разрешен только для собственных подписок или для администраторов
     if current_user['role'] != 'admin' and current_user['user_id'] != user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Нет доступа к этой информации')
     try:

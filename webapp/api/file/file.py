@@ -33,7 +33,7 @@ async def upload_file_endpoint(
             content_type=file.content_type,
             size=len(await file.read()),
         )
-        file.file.seek(0)
+        file.file.seek(0)  # Возвращаем указатель в начало файла после его чтения
         return await create_file(
             session=session, file_data=file_data, file=file, course_id=course_id, lesson_id=lesson_id
         )

@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     REDIS_PORT: int
     REDIS_PASSWORD: str
     REDIS_SIRIUS_CACHE_PREFIX: str = 'sirius'
+    TEMP_FILES_DIR: str = '/temp'
+    MINIO_ACCESS_KEY: str
+    MINIO_SECRET_KEY: str
+    MINIO_HOST: str
+    MINIO_PORT: str
 
 
 settings = Settings()

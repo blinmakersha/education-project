@@ -1,6 +1,6 @@
-import argparse
-import asyncio
 import json
+import asyncio
+import argparse
 from pathlib import Path
 from typing import List
 

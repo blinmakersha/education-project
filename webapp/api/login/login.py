@@ -22,6 +22,6 @@ async def login(
 
     return ORJSONResponse(
         {
-            'access_token': jwt_auth.create_token(user.id),
+            'access_token': jwt_auth.create_token(user_id=user.id, role=user.role),
         }
     )

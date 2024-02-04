@@ -1,8 +1,6 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-
-from webapp.schema.education.course import CourseRead
 
 
 class User(BaseModel):
@@ -34,6 +32,5 @@ class UserCreate(User):
 
 class UserRead(User):
     id: int = Field(..., example=1)
-    subscribed_courses: Optional[List[CourseRead]] = []
 
     model_config = ConfigDict(from_attributes=True)

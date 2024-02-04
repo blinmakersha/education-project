@@ -6,8 +6,9 @@ from httpx import AsyncClient
 from jose import JWTError, jwt
 from starlette import status
 
-from conf.config import settings
 from tests.const import URLS
+
+from conf.config import settings
 
 BASE_DIR = Path(__file__).parent
 FIXTURES_PATH = BASE_DIR / 'fixtures'
