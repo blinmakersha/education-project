@@ -14,11 +14,14 @@ async def create_subscription_endpoint(
     session: AsyncSession = Depends(get_session),
     current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
 ):
+    if current_user['user_id'] != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Недостаточно прав для выполнения операции')
     try:
-        new_subscription = await create_subscription(session, user_id, course_id)
-        return new_subscription
+        success = await create_subscription(session, user_id, course_id)
+        if not success:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Не удалось создать подписку')
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f'Ошибка сервера: {str(e)}')
 
 
 @subscribe_router.delete('/', status_code=status.HTTP_204_NO_CONTENT, tags=['Subscribe'])
@@ -28,6 +31,11 @@ async def delete_subscription_endpoint(
     session: AsyncSession = Depends(get_session),
     current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
 ):
-    success = await delete_subscription(session, user_id, course_id)
-    if not success:
-        raise HTTPException(status_code=404, detail='Subscription not found')
+    if current_user['user_id'] != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Недостаточно прав для выполнения операции')
+    try:
+        success = await delete_subscription(session, user_id, course_id)
+        if not success:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Подписка не найдена')
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f'Ошибка сервера: {str(e)}')
