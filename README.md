@@ -26,3 +26,51 @@
 - Обработка ошибок и соответствующие статусы ответов
 - В README.md ожидается увидеть как что работает, чтобы можно было ознакомиться проще с проектом
 ___
+**Перед запуском проекта нужно создать:**
+1. `.env` в папке `/grafana`, пример:
+```
+GF_DATABASE_TYPE = postgres
+GF_DATABASE_NAME = main_db
+GF_DATABASE_USER = postgres
+GF_DATABASE_PASSWORD = postgres
+GF_DATABASE_HOST = web_db:5432
+GF_SECURITY_ADMIN_USER = admin
+GF_SECURITY_ADMIN_PASSWORD = admin
+```
+2. `.env` в папке `/conf`, пример:
+```
+BIND_PORT=8000
+BIND_IP=0.0.0.0
+
+
+DB_URL=postgresql+asyncpg://postgres:postgres@web_db:5432/main_db
+JWT_SECRET_SALT=asdasdasdasdasdasd
+
+KAFKA_BOOTSTRAP_SERVERS=["kafka:29092"]
+KAFKA_TOPIC=test_resize_image
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minio123
+MINIO_HOST=minio
+MINIO_PORT=9000
+```
+___
+Далее, чтобы запустить проект нужна команда:
+```
+sudo docker-compose up
+```
+___
+**После запуска, доступно:**
+
+|Название     |Ссылка  |
+|-------------|-----|
+|Документация | http://0.0.0.0:8000/swagger|
+|Метрика      | http://0.0.0.0:8000/metrics|
+|Prometheus   | http://0.0.0.0:9090|
+|Grafana      | http://0.0.0.0:3000/login|
+|MinIO        | http://0.0.0.0:9001/login|
+
+___
