@@ -19,7 +19,7 @@ FIXTURES_PATH = BASE_DIR / 'fixtures'
         'author',
         'category',
         'difficulty',
-        'status',
+        'course_status',
         'expected_status',
         'fixtures',
     ),
@@ -79,7 +79,7 @@ async def test_create_course(
     author: str,
     category: str,
     difficulty: str,
-    status: str,
+    course_status: str,
     expected_status: int,
     access_token: str,
 ) -> None:
@@ -91,7 +91,7 @@ async def test_create_course(
             'author': author,
             'category': category,
             'difficulty': difficulty,
-            'status': status,
+            'status': course_status,
         },
         headers={'Authorization': f'Bearer Bearer {access_token}'},
     )
@@ -104,4 +104,4 @@ async def test_create_course(
         assert response_data['author'] == author
         assert response_data['category'] == category
         assert response_data['difficulty'] == difficulty
-        assert response_data['status'] == status
+        assert response_data['status'] == course_status

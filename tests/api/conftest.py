@@ -26,6 +26,8 @@ def redis_mock():
     # асинхронный mock объект для Redis
     mock_redis = mock.AsyncMock()
     mock_redis.get.return_value = None
+    mock_redis.put.return_value = None
+    mock_redis.delete.return_value = None
     return mock_redis
 
 
