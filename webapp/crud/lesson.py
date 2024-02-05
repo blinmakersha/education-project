@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -15,8 +15,16 @@ async def create_lesson(session: AsyncSession, course_id: int, lesson_data: Less
     return LessonRead.model_validate(new_lesson)
 
 
-async def get_lessons_all_by_course_id(session: AsyncSession, course_id: int) -> List[LessonRead] | None:
-    result = await session.execute(select(Lesson).where(Lesson.course_id == course_id))
+async def get_lessons_all_by_course_id(
+    session: AsyncSession,
+    course_id: int,
+    page: int = 1,
+    page_size: int = 10,
+) -> Optional[List[LessonRead]]:
+    # рассчет смещения на основе номера страницы и размера страницы
+    offset = (page - 1) * page_size
+    # выполняем запрос с учетом смещения и лимита
+    result = await session.execute(select(Lesson).where(Lesson.course_id == course_id).offset(offset).limit(page_size))
     all_lessons = result.scalars().all()
     if all_lessons:
         return [LessonRead.model_validate(lesson) for lesson in all_lessons]
@@ -40,8 +48,21 @@ async def update_lesson(
         for var, value in lesson_data.dict(exclude_unset=True).items():
             setattr(lesson, var, value)
         await session.commit()
-        await session.refresh(lesson, attribute_names=['files'])
-        return LessonRead.model_validate(lesson)
+        await session.refresh(lesson)
+
+        # преобразование данных из объекта SQLAlchemy в словарь
+        lesson_dict = {
+            'id': lesson.id,
+            'course_id': lesson.course_id,
+            'title': lesson.title,
+            'content': lesson.content,
+            'order': lesson.order,
+            'uploaded_at': lesson.uploaded_at,
+        }
+
+        # создание экземпляра модели Pydantic из словаря
+        lesson_read = LessonRead(**lesson_dict)
+        return lesson_read
     return None
 
 
