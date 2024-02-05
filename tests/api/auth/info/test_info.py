@@ -14,7 +14,7 @@ FIXTURES_PATH = BASE_DIR / 'fixtures'
     ('username', 'password', 'expected_status', 'fixtures'),
     [
         (
-            'test',
+            'student1',
             'qwerty',
             status.HTTP_200_OK,
             [

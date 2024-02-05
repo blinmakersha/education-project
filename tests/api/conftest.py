@@ -1,7 +1,9 @@
 import json
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import AsyncGenerator, List
+from unittest import mock
 
 import pytest
 from fastapi import FastAPI
@@ -15,13 +17,31 @@ from tests.my_types import FixtureFunctionT
 
 from webapp.db import kafka
 from webapp.db.postgres import engine, get_session
+from webapp.db.redis import get_redis
 from webapp.models.meta import metadata
 
 
 @pytest.fixture()
-async def client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
-    async with AsyncClient(app=app, base_url='http://test.com') as client:
-        yield client
+def redis_mock():
+    # асинхронный mock объект для Redis
+    mock_redis = mock.AsyncMock()
+    mock_redis.get.return_value = None
+    return mock_redis
+
+
+@pytest.fixture()
+async def client(
+    app: FastAPI,
+    redis_mock,
+) -> AsyncGenerator[AsyncClient, None]:
+    app.dependency_overrides[get_redis] = lambda: redis_mock
+    async with AsyncClient(
+        app=app,
+        base_url='http://test.com',
+        follow_redirects=True,
+    ) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture()
@@ -48,6 +68,11 @@ async def _load_fixtures(db_session: AsyncSession, fixtures: List[Path]) -> Fixt
         with open(fixture, 'r') as file:
             values = json.load(file)
 
+        if model.name == 'vacation':
+            for item in values:
+                item['start_date'] = datetime.strptime(item['start_date'], '%Y-%m-%d').date()
+                item['end_date'] = datetime.strptime(item['end_date'], '%Y-%m-%d').date()
+
         await db_session.execute(insert(model).values(values))
         await db_session.commit()
 
@@ -55,8 +80,16 @@ async def _load_fixtures(db_session: AsyncSession, fixtures: List[Path]) -> Fixt
 
 
 @pytest.fixture()
-def _mock_kafka(monkeypatch: pytest.MonkeyPatch, kafka_received_messages: List, mocked_hex: str) -> FixtureFunctionT:
-    monkeypatch.setattr(kafka, 'get_producer', lambda: TestKafkaProducer(kafka_received_messages))
+def _mock_kafka(
+    monkeypatch: pytest.MonkeyPatch,
+    kafka_received_messages: List,
+    mocked_hex: str,
+) -> FixtureFunctionT:
+    monkeypatch.setattr(
+        kafka,
+        'get_producer',
+        lambda: TestKafkaProducer(kafka_received_messages),
+    )
     monkeypatch.setattr(kafka, 'get_partition', lambda: 1)
     monkeypatch.setattr(uuid.UUID, 'hex', mocked_hex)
 
@@ -72,7 +105,10 @@ async def access_token(
     username: str,
     password: str,
 ) -> str:
-    response = await client.post(URLS['auth']['login'], json={'username': username, 'password': password})
+    response = await client.post(
+        URLS['auth']['login'],
+        json={'username': username, 'password': password},
+    )
     return response.json()['access_token']
 
 

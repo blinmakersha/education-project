@@ -27,7 +27,7 @@ FIXTURES_PATH = BASE_DIR / 'fixtures'
             ],
         ),
         (
-            'test',
+            'student1',
             'qwerty',
             status.HTTP_200_OK,
             True,
