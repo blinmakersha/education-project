@@ -25,7 +25,11 @@ async def get_courses_by_user_subscription(
 async def create_user_endpoint(
     user_data: UserCreate,
     session: AsyncSession = Depends(get_session),
+    current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
 ):
+    if current_user['role'] == 'admin':
+        return await create_user(session=session, user_data=user_data)
+    raise HTTPException(status_code=403, detail='Нет доступа для выполнения этой операции')
     try:
         user = await create_user(session=session, user_data=user_data)
         return user
@@ -69,6 +73,7 @@ async def get_me_endpoint(
 async def get_user_by_id_endpoint(
     user_id: int,
     session: AsyncSession = Depends(get_session),
+    current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
 ):
     try:
         user = await get_user_by_id(session=session, user_id=user_id)
