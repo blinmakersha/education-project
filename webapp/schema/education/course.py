@@ -1,13 +1,28 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 
 class Course(BaseModel):
-    title: str = Field(..., example='Introduction to Python')
-    description: str = Field(..., example='Learn the basics of Python.')
-    author: str = Field(..., example='Jane Doe')
-    category: str = Field(..., example='Programming')
-    difficulty: str = Field(..., example='Beginner')
-    status: str = Field(..., example='Active')
+    title: str
+    description: str
+    author: str
+    category: str
+    difficulty: str
+    status: str
+
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'title': 'Введение в Python',
+                    'description': 'Изучите основы Python.',
+                    'author': 'Джейн До',
+                    'category': 'Программирование',
+                    'difficulty': 'Начальный',
+                    'status': 'Активный',
+                }
+            ]
+        }
+    }
 
 
 class CourseCreate(Course):
@@ -15,6 +30,6 @@ class CourseCreate(Course):
 
 
 class CourseRead(Course):
-    id: int = Field(..., example=1)
+    id: int
 
     model_config = ConfigDict(from_attributes=True)

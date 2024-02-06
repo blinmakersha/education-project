@@ -11,6 +11,7 @@ from webapp.metrics import metrics
 from webapp.on_shutdown import stop_producer
 from webapp.on_startup.kafka import create_producer
 from webapp.on_startup.redis import start_redis
+from webapp.utils.middleware import MeasureLatencyMiddleware
 
 
 def setup_middleware(app: FastAPI) -> None:
@@ -23,6 +24,7 @@ def setup_middleware(app: FastAPI) -> None:
         allow_methods=['*'],
         allow_headers=['*'],
     )
+    app.add_middleware(MeasureLatencyMiddleware)
 
 
 def setup_routers(app: FastAPI) -> None:

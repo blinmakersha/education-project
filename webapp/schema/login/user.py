@@ -1,36 +1,75 @@
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class User(BaseModel):
-    username: str = Field(..., example='user')
-    email: EmailStr = Field(..., example='user@example.com')
-    role: Optional[str] = Field(None, example='admin')
-    additional_info: Optional[dict] = Field(None, example={'full_name': 'Дмитрий Петров'})
-
-    model_config = ConfigDict(from_attributes=True)
+    username: str
+    email: EmailStr
+    role: Optional[str]
+    additional_info: Optional[dict]
 
 
 class UserLogin(BaseModel):
-    username: str = Field(..., example='admin1')
-    password: str = Field(..., example='qwerty')
+    username: str
+    password: str
+
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'username': 'admin1',
+                    'password': 'qwerty',
+                }
+            ]
+        }
+    }
 
 
 class UserLoginResponse(BaseModel):
-    access_token: str = Field(
-        ...,
-        example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-    )
+    access_token: str
+
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'access_token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+                }
+            ]
+        }
+    }
 
 
 class UserCreate(User):
-    password: str = Field(..., example='newpassword')
+    id: Optional[int]
+    password: str
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            'examples': [
+                {
+                    'username': 'user',
+                    'email': 'user@example.com',
+                    'role': 'admin',
+                    'additional_info': {'full_name': 'Дмитрий Петров'},
+                    'password': 'qwerty',
+                }
+            ]
+        },
+    )
 
 
 class UserRead(User):
-    id: int = Field(..., example=1)
+    id: int
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            'examples': [
+                {
+                    'id': 1,
+                }
+            ]
+        },
+    )

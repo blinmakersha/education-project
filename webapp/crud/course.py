@@ -17,8 +17,8 @@ async def create_course(session: AsyncSession, course_data: CourseCreate) -> Cou
     return CourseRead.model_validate(new_course)
 
 
-async def get_courses_all(session: AsyncSession) -> List[CourseRead] | None:
-    result = await session.execute(select(Course))
+async def get_courses_all(session: AsyncSession, page: int, page_size: int) -> List[CourseRead] | None:
+    result = await session.execute(select(Course).offset((page - 1) * page_size).limit(page_size))
     all_courses = result.scalars().all()
     if all_courses:
         return [CourseRead.model_validate(course) for course in all_courses]

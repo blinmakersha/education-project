@@ -1,14 +1,24 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 
 class Lesson(BaseModel):
-    title: str = Field(..., example='Введение в Python')
-    content: str = Field(..., example='Этот урок познакомит вас с основами Python.')
-    order: int = Field(..., example=1)
+    title: str
+    content: str
+    order: int
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'title': 'Введение в Python',
+                    'content': 'Этот урок познакомит вас с основами Python.',
+                    'order': 1,
+                }
+            ]
+        }
+    }
 
 
 class LessonCreate(Lesson):

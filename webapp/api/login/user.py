@@ -21,20 +21,26 @@ async def get_courses_by_user_subscription(
     return await get_courses_subscription(session=session, user_id=user_id)
 
 
-@user_router.post('/signup', response_model=UserRead, tags=['Users'], response_class=ORJSONResponse)
+@user_router.post(
+    '/signup',
+    response_model=UserRead,
+    tags=['Users'],
+    response_class=ORJSONResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_user_endpoint(
     user_data: UserCreate,
     session: AsyncSession = Depends(get_session),
     current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
 ):
     if current_user['role'] == 'admin':
-        return await create_user(session=session, user_data=user_data)
-    raise HTTPException(status_code=403, detail='Нет доступа для выполнения этой операции')
-    try:
-        user = await create_user(session=session, user_data=user_data)
-        return user
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        try:
+            user = await create_user(session=session, user_data=user_data)
+            return user
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    else:
+        raise HTTPException(status_code=403, detail='Нет доступа для выполнения этой операции')
 
 
 @user_router.put('/{user_id}', response_model=UserRead, tags=['Users'], response_class=ORJSONResponse)
@@ -44,15 +50,16 @@ async def update_user_endpoint(
     session: AsyncSession = Depends(get_session),
     current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
 ):
-    if current_user['user_id'] != user_id and current_user['role'] != 'admin':
+    if current_user['user_id'] == user_id or current_user['role'] == 'admin':
+        try:
+            user = await update_user(session=session, user_id=user_id, user_data=user_data)
+            if not user:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Пользователь не найден')
+            return user
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    else:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Нет доступа для выполнения этой операции')
-    try:
-        user = await update_user(session=session, user_id=user_id, user_data=user_data)
-        if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Пользователь не найден')
-        return user
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @user_router.get('/me', response_model=UserRead, tags=['Users'], response_class=ORJSONResponse)
@@ -107,7 +114,7 @@ async def get_courses_by_user_id_subscription(
     session: AsyncSession = Depends(get_session),
     current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
 ):
-    # доп проверка: если доступ разрешен только для собственных подписок или для администраторов
+    # Дополнительная проверка, если доступ разрешен только для собственных подписок или для администраторов
     if current_user['role'] != 'admin' and current_user['user_id'] != user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Нет доступа к этой информации')
     try:

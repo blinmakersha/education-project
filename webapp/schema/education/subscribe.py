@@ -1,11 +1,20 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 
 
 class Subscription(BaseModel):
-    user_id: int = Field(..., example=1)
-    course_id: int = Field(..., example=1)
-    subscription_date: datetime = Field(..., example=datetime.now())
+    user_id: int
+    course_id: int
+    subscription_date: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = {
+        'json_schema_extra': {
+            'examples': [
+                {
+                    'user_id': 1,
+                    'course_id': 1,
+                }
+            ]
+        }
+    }

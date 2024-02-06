@@ -1,16 +1,20 @@
 from typing import List
 from urllib.parse import quote
 
-from fastapi import Depends, File, HTTPException, UploadFile
+import orjson
+from fastapi import Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from minio.error import S3Error
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from webapp.api.file.router import file_router
+from webapp.cache.key_builder import get_files_by_lesson_cache_key
 from webapp.crud.file import create_file, delete_file, get_file_by_id, get_files_by_lesson_id
 from webapp.db.minio import minio_client
 from webapp.db.postgres import get_session
+from webapp.db.redis import get_redis
 from webapp.schema.file.file import FileCreate, FileRead
 from webapp.utils.auth.jwt import JwtTokenT, jwt_auth
 
@@ -44,11 +48,26 @@ async def upload_file_endpoint(
 
 
 @file_router.get('/files', response_model=List[FileRead], tags=['Files'])
-async def get_files_endpoint(course_id: int, lesson_id: int, session: AsyncSession = Depends(get_session)):
+async def get_files_endpoint(
+    course_id: int,
+    lesson_id: int,
+    page: int = Query(1, ge=1, description='Номер страницы'),
+    page_size: int = Query(10, ge=1, le=100, description='Количество файлов на странице'),
+    current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
+    session: AsyncSession = Depends(get_session),
+    redis: Redis = Depends(get_redis),
+):
+    cache_key = get_files_by_lesson_cache_key(course_id, lesson_id, page, page_size)
+    cached_result = await redis.get(cache_key)
+    if cached_result:
+        return orjson.loads(cached_result)
     try:
-        result = await get_files_by_lesson_id(session=session, course_id=course_id, lesson_id=lesson_id)
+        result = await get_files_by_lesson_id(
+            session=session, course_id=course_id, lesson_id=lesson_id, page=page, page_size=page_size
+        )
         if not result:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Файлы не найдены')
+        await redis.set(cache_key, orjson.dumps([file.dict() for file in result]), ex=3600)  # Кэш на 1 час
         return result
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
@@ -56,7 +75,11 @@ async def get_files_endpoint(course_id: int, lesson_id: int, session: AsyncSessi
 
 @file_router.get('/files/{file_id}', tags=['Files'])
 async def download_file_endpoint(
-    course_id: int, lesson_id: int, file_id: int, session: AsyncSession = Depends(get_session)
+    course_id: int,
+    lesson_id: int,
+    file_id: int,
+    session: AsyncSession = Depends(get_session),
+    current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
 ):
     try:
         file_record = await get_file_by_id(session, file_id)

@@ -68,11 +68,15 @@ async def delete_file(session: AsyncSession, course_id: int, lesson_id: int, fil
     return False
 
 
-async def get_files_by_lesson_id(session: AsyncSession, course_id: int, lesson_id: int) -> List[FileRead] | None:
+async def get_files_by_lesson_id(
+    session: AsyncSession, course_id: int, lesson_id: int, page: int = 1, page_size: int = 10
+) -> List[FileRead] | None:
     result = await session.execute(
         select(SQLAFile)
         .join(SQLALesson, SQLALesson.id == SQLAFile.lesson_id)
         .where(SQLALesson.id == lesson_id, SQLALesson.course_id == course_id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
     )
     files = result.scalars().all()
     if files:

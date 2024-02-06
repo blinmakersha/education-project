@@ -7,6 +7,8 @@ from webapp.db.postgres import get_session
 from webapp.utils.auth.jwt import JwtTokenT, jwt_auth
 
 
+# с помощью данного функционала преподаватель или администратор может создать или удалить подписку
+# на курс любому пользователю
 @subscribe_router.post('/', status_code=status.HTTP_201_CREATED, tags=['Subscribe'])
 async def create_subscription_endpoint(
     user_id: int,
@@ -14,7 +16,7 @@ async def create_subscription_endpoint(
     session: AsyncSession = Depends(get_session),
     current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
 ):
-    if current_user['user_id'] != user_id:
+    if current_user['role'] not in ['admin', 'teacher']:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Недостаточно прав для выполнения операции')
     try:
         success = await create_subscription(session, user_id, course_id)
@@ -31,7 +33,7 @@ async def delete_subscription_endpoint(
     session: AsyncSession = Depends(get_session),
     current_user: JwtTokenT = Depends(jwt_auth.get_current_user),
 ):
-    if current_user['user_id'] != user_id:
+    if current_user['role'] not in ['admin', 'teacher']:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Недостаточно прав для выполнения операции')
     try:
         success = await delete_subscription(session, user_id, course_id)
