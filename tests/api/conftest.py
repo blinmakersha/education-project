@@ -72,8 +72,10 @@ async def _load_fixtures(db_session: AsyncSession, fixtures: List[Path]) -> Fixt
 
         if model.name == 'vacation':
             for item in values:
-                item['start_date'] = datetime.strptime(item['start_date'], '%Y-%m-%d').date()
-                item['end_date'] = datetime.strptime(item['end_date'], '%Y-%m-%d').date()
+                item['start_date'] = datetime.strptime(
+                    item['start_date'], '%Y-%m-%d').date()
+                item['end_date'] = datetime.strptime(
+                    item['end_date'], '%Y-%m-%d').date()
 
         await db_session.execute(insert(model).values(values))
         await db_session.commit()

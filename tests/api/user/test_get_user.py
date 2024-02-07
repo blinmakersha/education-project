@@ -14,37 +14,37 @@ FIXTURES_PATH = BASE_DIR / 'fixtures'
     (
         'username',
         'password',
-        'username_create',
-        'password_create',
-        'email',
-        'role',
+        'user_id',
+        'get_username',
+        'get_role',
         'full_name',
+        'email',
         'expected_status',
         'fixtures',
     ),
     [
         (
-            'admin1',
+            'student1',
             'qwerty',
-            'student',
-            'qwerty',
-            'student@example.com',
+            11,
+            'student1',
             'student',
             'Дмитрий Петров',
-            status.HTTP_201_CREATED,
+            'student1@example.com',
+            status.HTTP_200_OK,
             [
                 FIXTURES_PATH / 'sirius.user.json',
             ],
         ),
         (
+            'admin1',
+            'qwerty',
+            11,
             'student1',
-            'qwerty',
-            'student',
-            'qwerty',
-            'student@example.com',
             'student',
             'Дмитрий Петров',
-            status.HTTP_403_FORBIDDEN,
+            'student1@example.com',
+            status.HTTP_200_OK,
             [
                 FIXTURES_PATH / 'sirius.user.json',
             ],
@@ -53,34 +53,27 @@ FIXTURES_PATH = BASE_DIR / 'fixtures'
 )
 @pytest.mark.asyncio()
 @pytest.mark.usefixtures('_common_api_fixture')
-async def test_create_user(
+async def test_get_user(
     client: AsyncClient,
     username: str,
     password: str,
-    username_create: str,
-    password_create: str,
+    user_id: int,
+    get_username: str,
+    full_name: str,
     email: str,
-    role: str,
-    full_name: dict,
+    get_role: str,
     expected_status: int,
     access_token: str,
 ) -> None:
-    response = await client.post(
-        URLS['user']['create_user'],
-        json={
-            'additional_info': {'full_name': full_name},
-            'role': role,
-            'email': email,
-            'password': password_create,
-            'username': username_create,
-        },
+    response = await client.get(
+        URLS['user']['get_del_user_by_id'].format(user_id=user_id),
         headers={'Authorization': f'Bearer Bearer {access_token}'},
     )
 
     assert response.status_code == expected_status
-    if response.status_code == 201:
-        response_data = response.json()
-        assert response_data['additional_info']['full_name'] == full_name
-        assert response_data['role'] == role
-        assert response_data['email'] == email
-        assert response_data['username'] == username_create
+    response_data = response.json()
+    assert response_data['role'] == get_role
+    assert response_data['additional_info']['full_name'] == full_name
+    assert response_data['email'] == email
+    assert response_data['username'] == get_username
+    assert response_data['id'] == user_id
