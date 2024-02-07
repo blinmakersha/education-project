@@ -55,17 +55,18 @@ async def get_all_lessons_by_course_endpoint(
     cached_lessons = await redis.get(cache_key)
 
     if cached_lessons:
+        if cached_lessons == b'[]':
+            return []
         return orjson.loads(cached_lessons)
     else:
         try:
             lessons = await get_lessons_all_by_course_id(
                 session=session, course_id=course_id, page=page, page_size=page_size
             )
-            if lessons is None:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Уроки не найдены')
-            await redis.set(
-                cache_key, orjson.dumps([lesson.dict() for lesson in lessons]), ex=3600
-            )  # Кэширование на 1 час
+            if lessons:
+                await redis.set(cache_key, orjson.dumps([lesson.dict() for lesson in lessons]), ex=3600)
+            else:
+                await redis.set(cache_key, b'[]', ex=3600)
             return lessons
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
@@ -83,13 +84,20 @@ async def get_lesson_endpoint(
     cached_lesson = await redis.get(cache_key)
 
     if cached_lesson:
+        if cached_lesson == b'{}':
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Урок не найден')
         return orjson.loads(cached_lesson)
     else:
         try:
             lesson = await get_lesson_by_id(session=session, course_id=course_id, lesson_id=lesson_id)
-            if lesson is None:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Урок не найден')
-            await redis.set(cache_key, orjson.dumps(lesson.dict()), ex=3600)  # Кэширование на 1 час
+            if lesson:
+                # кеширование на 1 час
+                await redis.set(cache_key, orjson.dumps(lesson.dict()), ex=3600)
+            else:
+                # кешируем отсутствие урока
+                await redis.set(cache_key, b'{}', ex=3600)
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail='Урок не найден')
             return lesson
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
